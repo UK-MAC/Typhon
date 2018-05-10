@@ -48,6 +48,10 @@ If you are having trouble getting CMake to find yaml-cpp, you can pass it the
 `YamlCpp_ROOT` variable specifying its location. For issues with MPI, please
 refer to the CMake [FindMPI documentation](https://cmake.org/cmake/help/latest/module/FindMPI.html).
 
+## Examples
+
+For examples of using Typhon, please see the `examples` directory.
+
 ## Release history
 
 * 02/05/2018, version 3.0
