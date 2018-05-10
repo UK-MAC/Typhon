@@ -18,6 +18,8 @@
 #ifndef TYPHON_KEYS_H
 #define TYPHON_KEYS_H
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {
@@ -47,26 +49,6 @@ Get_Key(
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Public Typhon API - key related functions
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** \brief Create a new key set. */
-int
-TYPH_Create_Key_Set(
-        TYPH_Keytype key_type,
-        int layer_min,
-        int layer_max,
-        int partition_id,
-        int &key_set_id);
-
-/** @} */
 
 
 

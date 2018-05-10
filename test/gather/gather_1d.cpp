@@ -4,6 +4,7 @@
 #include <vector>
 #include <memory>
 #include <functional>
+#include <algorithm>
 
 
 
@@ -20,7 +21,7 @@ main(
         char const *argv[] __attribute__((unused)))
 {
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     int nproc;
@@ -38,7 +39,7 @@ main(
 
     // Check that gather works by gathering ranks
     std::unique_ptr<int[]> res(new int[nproc * N]);
-    typh_err = TYPH_Gather(&data[0], &N, 1, res.get());
+    typh_err = TYPH_Gather_i(&data[0], &N, 1, res.get());
     TYPH_FAIL_ON_ERR(typh_err)
 
     bool success = true;
@@ -53,7 +54,7 @@ main(
         if (!success) break;
     }
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

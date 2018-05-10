@@ -18,6 +18,8 @@
 #ifndef TYPHON_DISTRIBUTE_NS_H
 #define TYPHON_DISTRIBUTE_NS_H
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {

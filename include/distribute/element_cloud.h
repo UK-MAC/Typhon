@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {

@@ -15,7 +15,7 @@ main(
         char const *argv[] __attribute__((unused)))
 {
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     int nproc;
@@ -28,25 +28,25 @@ main(
 
     // Check that logical and reduction works
     // ... Try with some trues and some falses
-    bool input = rank % 2 == 0;
-    bool res;
-    typh_err = TYPH_Reduce(&input, nullptr, 0, &res, TYPH_OP_AND);
+    int input = rank % 2 == 0 ? 1 : 0;
+    int res;
+    typh_err = TYPH_Reduce_z(&input, nullptr, 0, &res, TYPH_OP_AND);
     TYPH_FAIL_ON_ERR(typh_err)
-    bool success = !res;
+    bool success = res == 0;
 
     // ... Try with all false
-    input = false;
-    typh_err = TYPH_Reduce(&input, nullptr, 0, &res, TYPH_OP_AND);
+    input = 0;
+    typh_err = TYPH_Reduce_z(&input, nullptr, 0, &res, TYPH_OP_AND);
     TYPH_FAIL_ON_ERR(typh_err)
-    success &= !res;
+    success &= res == 0;
 
     // ... Try with all true
-    input = true;
-    typh_err = TYPH_Reduce(&input, nullptr, 0, &res, TYPH_OP_AND);
+    input = 1;
+    typh_err = TYPH_Reduce_z(&input, nullptr, 0, &res, TYPH_OP_AND);
     TYPH_FAIL_ON_ERR(typh_err)
-    success &= res;
+    success &= res == 1;
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

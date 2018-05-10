@@ -19,7 +19,7 @@ main(
         char const *argv[] __attribute__((unused)))
 {
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     int nproc;
@@ -32,7 +32,7 @@ main(
 
     // Check that gather works by gathering ranks
     std::unique_ptr<int[]> ranks(new int[nproc]);
-    typh_err = TYPH_Gather(&rank, nullptr, 0, ranks.get());
+    typh_err = TYPH_Gather_i(&rank, nullptr, 0, ranks.get());
     TYPH_FAIL_ON_ERR(typh_err)
 
     // ... Ranks should be ordered
@@ -40,7 +40,7 @@ main(
     std::iota(correct.begin(), correct.end(), 0);
     bool const success = std::equal(correct.begin(), correct.end(), ranks.get());
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

@@ -15,11 +15,17 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <type_traits>
 #include <fstream>
 #include <numeric>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "register.h"
+#include "keys.h"
+#include "serialise.h"
 
 
 
@@ -682,9 +688,14 @@ Deserialise(std::istream &is, Quant *quant)
 } // namespace _TYPH_Internal
 
 int
-TYPH_Serialise_Key_Set(std::string filename, int key_set_id)
+TYPH_Serialise_Key_Set(char const *cfilename, int key_set_id)
 {
     using namespace _TYPH_Internal;
+
+    std::string filename;
+    if (cfilename != nullptr) {
+        filename = std::string(cfilename);
+    }
 
     Key_Set *key_set;
     int typh_err = Get_Key_Set(key_set_id, &key_set);
@@ -718,9 +729,14 @@ TYPH_Serialise_Key_Set(std::string filename, int key_set_id)
 
 
 int
-TYPH_Serialise_Phase(std::string filename, int phase_id)
+TYPH_Serialise_Phase(char const *cfilename, int phase_id)
 {
     using namespace _TYPH_Internal;
+
+    std::string filename;
+    if (cfilename != nullptr) {
+        filename = std::string(cfilename);
+    }
 
     Phase *phase;
     int typh_err = TYPH_REGISTRY->Get_Phase(phase_id, &phase);
@@ -754,9 +770,14 @@ TYPH_Serialise_Phase(std::string filename, int phase_id)
 
 
 int
-TYPH_Serialise_All_Phases(std::string filename)
+TYPH_Serialise_All_Phases(char const *cfilename)
 {
     using namespace _TYPH_Internal;
+
+    std::string filename;
+    if (cfilename != nullptr) {
+        filename = std::string(cfilename);
+    }
 
     MPI_Runtime const *mp = TYPH_CORE->Get_MPI_Runtime();
 
@@ -793,9 +814,14 @@ TYPH_Serialise_All_Phases(std::string filename)
 
 
 int
-TYPH_Serialise_Quant(std::string filename, int quant_id)
+TYPH_Serialise_Quant(char const *cfilename, int quant_id)
 {
     using namespace _TYPH_Internal;
+
+    std::string filename;
+    if (cfilename != nullptr) {
+        filename = std::string(cfilename);
+    }
 
     Quant *quant;
     int typh_err = TYPH_REGISTRY->Get_Quant(quant_id, &quant);
@@ -829,9 +855,14 @@ TYPH_Serialise_Quant(std::string filename, int quant_id)
 
 
 int
-TYPH_Serialise_All_Quants(std::string filename)
+TYPH_Serialise_All_Quants(char const *cfilename)
 {
     using namespace _TYPH_Internal;
+
+    std::string filename;
+    if (cfilename != nullptr) {
+        filename = std::string(cfilename);
+    }
 
     MPI_Runtime const *mp = TYPH_CORE->Get_MPI_Runtime();
 

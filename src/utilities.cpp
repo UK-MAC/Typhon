@@ -15,9 +15,12 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <cassert>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
 
 
 
@@ -402,4 +405,72 @@ Sort_1(int *iarray, int const *dims, int rank, int const *icol, int len,
     #undef IX1
 }
 
+
+
+int
+Each_Rank(std::function<int(int)> f)
+{
+    MPI_Runtime const *mp = TYPH_CORE->Get_MPI_Runtime();
+
+    int typh_err = TYPH_SUCCESS;
+    for (int ip = 0; ip < mp->size; ip++) {
+        if (ip == mp->rank) {
+            typh_err = f(mp->rank);
+        }
+
+        typh_err = TYPH_Barrier();
+    }
+
+    return typh_err;
+}
+
 } // namespace _TYPH_Internal
+
+/**
+ *  The reason for this existing is to give C/Fortran client code something
+ *  to free allocated memory with, a C++ application might just as well use
+ *  delete[] directly.
+ */
+int
+TYPH_Free(int *ptr)
+{
+    delete[] ptr;
+    return TYPH_SUCCESS;
+}
+
+
+
+char const *
+TYPH_To_String_Datatype(TYPH_Datatype datatype)
+{
+    switch (datatype) {
+    case TYPH_DATATYPE_NULL:    return "TYPH_DATATYPE_NULL";
+    case TYPH_DATATYPE_REAL:    return "TYPH_DATATYPE_REAL";
+    case TYPH_DATATYPE_INTEGER: return "TYPH_DATATYPE_INTEGER";
+    case TYPH_DATATYPE_LOGICAL: return "TYPH_DATATYPE_LOGICAL";
+    default:                    return "";
+    }
+}
+
+
+
+char const *
+TYPH_To_String_Auxiliary(TYPH_Auxiliary aux)
+{
+    switch (aux) {
+    case TYPH_AUXILIARY_NONE: return "TYPH_AUXILIARY_NONE";
+    default:                  return "";
+    }
+}
+
+
+
+char const *
+TYPH_To_String_Auxiliary(TYPH_Centring centring)
+{
+    switch (centring) {
+    case TYPH_CENTRING_NODE: return "TYPH_CENTRING_NODE";
+    case TYPH_CENTRING_CELL: return "TYPH_CENTRING_CELL";
+    default:                 return "";
+    }
+}

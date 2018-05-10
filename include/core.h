@@ -20,6 +20,9 @@
 
 #include <functional>
 #include <vector>
+#include <mpi.h>
+
+#include "typhon.h"
 
 
 
@@ -119,64 +122,6 @@ private:
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Public Typhon API - core functions
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** Initialise Typhon. */
-int
-TYPH_Init(
-        MPI_Comm *comm = nullptr);
-
-/** Shutdown Typhon. */
-int
-TYPH_Kill(
-        bool finalise = true);
-
-/** Abort Typhon in the case of an error. */
-int
-TYPH_Abort(
-        int abort_code);
-
-/** Get the current processor count. */
-int
-TYPH_Get_Size(
-        int *size);
-
-/** Get the rank of the calling processor. */
-int
-TYPH_Get_Rank(
-        int *rank);
-
-/** Return whether or not the calling processor is the master rank. */
-bool
-TYPH_Is_Master();
-
-/** Synchronise all processors. */
-int
-TYPH_Barrier();
-
-/** Return timestamp. */
-double
-TYPH_Get_Time();
-
-/** Set the argument to the current MPI communicator. */
-int
-TYPH_Set_Comm(
-        MPI_Comm *comm);
-
-/** Set the argument to the MPI self communicator. */
-int
-TYPH_Set_Comm_Self(
-        MPI_Comm *comm);
-
-/** @} */
 
 
 

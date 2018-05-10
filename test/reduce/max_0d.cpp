@@ -15,7 +15,7 @@ main(
         char const *argv[] __attribute__((unused)))
 {
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     int nproc;
@@ -28,13 +28,13 @@ main(
 
     // Check that max reduction works
     int res;
-    typh_err = TYPH_Reduce(&rank, nullptr, 0, &res, TYPH_OP_MAX);
+    typh_err = TYPH_Reduce_i(&rank, nullptr, 0, &res, TYPH_OP_MAX);
     TYPH_FAIL_ON_ERR(typh_err)
 
     int const correct = nproc - 1;
     bool const success = res == correct;
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

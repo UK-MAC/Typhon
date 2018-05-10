@@ -23,6 +23,10 @@
 #include <iostream>
 #include <algorithm>
 #include <cassert>
+#include <functional>
+
+#include "typhon.h"
+#include "types.h"
 
 
 
@@ -63,43 +67,13 @@ Sort_1(int *iarray, int const *dims, int rank, int const *icol, int len,
 // -----------------------------------------------------------------------------
 // Conversion between C, MPI and Typhon datatypes
 // -----------------------------------------------------------------------------
-template <typename T>
-inline TYPH_Datatype
-TYPH_Datatype_From_T(T)
-{
-    return TYPH_DATATYPE_NULL;
-}
-
-template <>
-inline TYPH_Datatype
-TYPH_Datatype_From_T(int)
-{
-    return TYPH_DATATYPE_INTEGER;
-}
-
-template <>
-inline TYPH_Datatype
-TYPH_Datatype_From_T(double)
-{
-    return TYPH_DATATYPE_REAL;
-}
-
-template <>
-inline TYPH_Datatype
-TYPH_Datatype_From_T(bool)
-{
-    return TYPH_DATATYPE_LOGICAL;
-}
-
-
-
 inline MPI_Datatype
 MPI_Datatype_From_TYPH_Datatype(TYPH_Datatype datatype)
 {
     switch (datatype) {
     case TYPH_DATATYPE_INTEGER: return MPI_INT;
     case TYPH_DATATYPE_REAL:    return MPI_DOUBLE;
-    case TYPH_DATATYPE_LOGICAL: return MPI_C_BOOL;
+    case TYPH_DATATYPE_LOGICAL: return MPI_INT;
     default:
         return MPI_DATATYPE_NULL;
     }
@@ -140,6 +114,15 @@ Index_2D(int j, int i, int W) { // flipped to handle the col-major indexing
 
 
 // -----------------------------------------------------------------------------
+// Debug output
+// -----------------------------------------------------------------------------
+/** \brief Execute a function on each rank, but serialised with barriers. */
+int
+Each_Rank(std::function<int(int)> f);
+
+
+
+// -----------------------------------------------------------------------------
 // Error checking functions
 // -----------------------------------------------------------------------------
 void _Warning(std::string routine, int line, std::string desc);
@@ -166,7 +149,7 @@ int _Assert(bool condition, std::string routine, int err_type,
             __LINE__)
 
 // As TYPH_ASSERT, except will return TYPH_FAIL on failure of the asserted
-// condition (ie. when in release mode)
+// condition (when in release mode)
 #define TYPH_ASSERT_RET(cond, err_type, err_code, desc) \
     if (_TYPH_Internal::_Assert( \
             cond, \
@@ -187,55 +170,6 @@ void _Alloc_Check(void *ptr, std::string var);
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Convert public Typhon types to strings for printing/debugging.
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** \brief Convert a #TYPH_Datatype to its string representation. */
-inline std::string
-TYPH_To_String(TYPH_Datatype datatype)
-{
-    switch (datatype) {
-    case TYPH_DATATYPE_NULL:    return "TYPH_DATATYPE_NULL";
-    case TYPH_DATATYPE_REAL:    return "TYPH_DATATYPE_REAL";
-    case TYPH_DATATYPE_INTEGER: return "TYPH_DATATYPE_INTEGER";
-    case TYPH_DATATYPE_LOGICAL: return "TYPH_DATATYPE_LOGICAL";
-    default:                    return "";
-    }
-}
-
-
-
-/** \brief Convert a #TYPH_Auxiliary to its string representation. */
-inline std::string
-TYPH_To_String(TYPH_Auxiliary aux)
-{
-    switch (aux) {
-    case TYPH_AUXILIARY_NONE: return "TYPH_AUXILIARY_NONE";
-    default:                  return "";
-    }
-}
-
-
-
-/** \brief Convert a #TYPH_Centring to its string representation. */
-inline std::string
-TYPH_To_String(TYPH_Centring centring)
-{
-    switch (centring) {
-    case TYPH_CENTRING_NODE: return "TYPH_CENTRING_NODE";
-    case TYPH_CENTRING_CELL: return "TYPH_CENTRING_CELL";
-    default:                 return "";
-    }
-}
-
-/** @} */
 
 
 

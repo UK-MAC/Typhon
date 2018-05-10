@@ -1,5 +1,8 @@
 #include <typhon.h>
 
+#include "types.h"
+#include "register.h"
+
 
 
 #define TYPH_FAIL_ON_ERR(terr) \
@@ -17,7 +20,7 @@ main(
     using namespace _TYPH_Internal;
 
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     typh_err = TYPH_Start_Register();
@@ -36,8 +39,8 @@ main(
     int const rank = 2;
 
     int quant_id;
-    typh_err = TYPH_Add_Quant(quant_id, name, num_ghosts, datatype, centring,
-            pure_or_aux, aux, dims, rank);
+    typh_err = TYPH_Add_Quant(&quant_id, name.c_str(), num_ghosts, datatype,
+            centring, pure_or_aux, aux, dims, rank);
     TYPH_FAIL_ON_ERR(typh_err)
 
     typh_err = TYPH_Finish_Register();
@@ -65,7 +68,7 @@ main(
         success &= quant->dims[1]    == N;
     }
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

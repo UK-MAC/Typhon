@@ -16,6 +16,7 @@
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
 #include "typhon.h"
+#include "utilities.h"
 #include "distribute/node_cloud.h"
 
 #include <algorithm>

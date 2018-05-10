@@ -1,4 +1,6 @@
-#include <typhon.h>
+#include "typhon.h"
+#include "types.h"
+#include "register.h"
 
 
 
@@ -17,7 +19,7 @@ main(
     using namespace _TYPH_Internal;
 
     int typh_err;
-    typh_err = TYPH_Init();
+    typh_err = TYPH_Init(nullptr);
     TYPH_FAIL_ON_ERR(typh_err)
 
     typh_err = TYPH_Start_Register();
@@ -29,7 +31,8 @@ main(
     int             pure_or_aux = TYPH_PURE;
 
     int phase_id;
-    typh_err = TYPH_Add_Phase(phase_id, name, num_ghosts, pure_or_aux);
+    typh_err = TYPH_Add_Phase(&phase_id, name.c_str(), num_ghosts, pure_or_aux,
+            -1, -1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     typh_err = TYPH_Finish_Register();
@@ -49,7 +52,7 @@ main(
         success &= phase->is_pure    == true;
     }
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     TYPH_FAIL_ON_ERR(typh_err)
 
     return success ? EXIT_SUCCESS : EXIT_FAILURE;

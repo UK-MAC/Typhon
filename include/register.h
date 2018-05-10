@@ -20,6 +20,8 @@
 
 #include <vector>
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {
@@ -82,52 +84,6 @@ private:
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Public Typhon API - registration functions
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** \brief Start phase and quant registration. */
-int
-TYPH_Start_Register();
-
-/** \brief End phase and quant registration. */
-int
-TYPH_Finish_Register();
-
-/** \brief Undergoing phase and quant registration? */
-int
-TYPH_Is_Registering(bool &ret);
-
-/** \brief Register a new communication phase. */
-int
-TYPH_Add_Phase(
-        int &phase_id,
-        std::string name,
-        TYPH_Ghosts num_ghosts,
-        int pure_or_aux,
-        int key_set_id = -1,
-        int ghosts_min = -1);
-
-/** \brief Register a new quantity. */
-int
-TYPH_Add_Quant(
-        int &quant_id,
-        std::string name,
-        TYPH_Ghosts num_ghosts,
-        TYPH_Datatype datatype,
-        TYPH_Centring centring,
-        int pure_or_aux,
-        TYPH_Auxiliary aux = TYPH_AUXILIARY_NONE,
-        int const *dims = nullptr,
-        int num_dims = 0);
-
-/** @} */
 
 
 

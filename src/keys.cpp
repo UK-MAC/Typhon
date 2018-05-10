@@ -15,11 +15,18 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <vector>
 #include <cassert>
 #include <memory>
+#include <mpi.h>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "decomposition.h"
+#include "keys.h"
+
 
 
 
@@ -327,7 +334,7 @@ Define_Key_Set(
 
                 num_send = 0;
 
-                int start_index = start_index = total_items[layer-1];
+                int start_index = total_items[layer-1];
 
                 // First work out how many ghost cells/nodes belong to each
                 // neighbour processor
@@ -401,14 +408,14 @@ Define_Key_Set(
         // Ensure all processors have the total number of items to send
 
         // Must ensure this call is maintained if the collectives change
-        typh_err = TYPH_Reduce(
+        typh_err = TYPH_Reduce_i(
                 counts.get(),
                 &mp->size,
                 1,
                 t_counts.get(),
                 TYPH_OP_SUM);
         TYPH_ASSERT(typh_err == TYPH_SUCCESS, ERR_INT, TYPH_ERR_INTERNAL,
-                "TYPH_Reduce failed");
+                "TYPH_Reduce_i failed");
         num_recv = t_counts[mp->rank];
 
         // Fill send_item_list with global IDs if available
@@ -731,8 +738,12 @@ Get_Key(
  * \return TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Create_Key_Set(TYPH_Keytype key_type, int layer_min, int layer_max,
-        int partition_id, int &key_set_id)
+TYPH_Create_Key_Set(
+        TYPH_Keytype key_type,
+        int layer_min,
+        int layer_max,
+        int partition_id,
+        int *key_set_id)
 {
     using namespace _TYPH_Internal;
 
@@ -840,7 +851,7 @@ TYPH_Create_Key_Set(TYPH_Keytype key_type, int layer_min, int layer_max,
     // Create a new key set to work with
     Key_Set *key_set = nullptr;
     typh_err = New_Key_Set(
-            key_set_id,
+            *key_set_id,
             centring,
             aux,
             stride,

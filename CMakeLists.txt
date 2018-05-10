@@ -1,11 +1,24 @@
 cmake_minimum_required(VERSION 3.10)
 
-project(
-    typhon
-    VERSION 3.0.0
-    DESCRIPTION "Typhon is a distributed communications library for unstructured mesh applications."
-    LANGUAGES CXX
-)
+if (NOT DEFINED ENABLE_FORTRAN)
+    set(ENABLE_FORTRAN ON)
+endif (NOT DEFINED ENABLE_FORTRAN)
+
+if (ENABLE_FORTRAN)
+    project(
+        typhon
+        VERSION 3.0.0
+        DESCRIPTION "Typhon is a distributed communications library for unstructured mesh applications."
+        LANGUAGES CXX Fortran
+    )
+else (ENABLE_FORTRAN)
+    project(
+        typhon
+        VERSION 3.0.0
+        DESCRIPTION "Typhon is a distributed communications library for unstructured mesh applications."
+        LANGUAGES CXX
+    )
+endif (ENABLE_FORTRAN)
 
 set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 
@@ -16,7 +29,6 @@ endif (NOT DEFINED BUILD_TYPHON_DUMP)
 if (NOT DEFINED BUILD_DOCS)
     set(BUILD_DOCS OFF)
 endif (NOT DEFINED BUILD_DOCS)
-
 
 
 # ------------------------------------------------------------------------------
@@ -38,21 +50,9 @@ execute_process(
     OUTPUT_STRIP_TRAILING_WHITESPACE
 )
 
-
-
-# ------------------------------------------------------------------------------
-# Generate API as part of build process
-# ------------------------------------------------------------------------------
-add_custom_command(
-    OUTPUT api/typhon.h
-    COMMAND ${PROJECT_SOURCE_DIR}/scripts/cxx_api.sh
-    WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}
-)
-
-add_custom_target(
-    typhon-api ALL
-    DEPENDS api/typhon.h
-)
+# Add git info
+add_definitions("-DTYPHON_GIT_BRANCH=${GIT_BRANCH}")
+add_definitions("-DTYPHON_GIT_COMMIT_HASH=${GIT_COMMIT_HASH}")
 
 
 
@@ -81,20 +81,36 @@ set(TYPHON_SRC
 
 add_library(typhon SHARED ${TYPHON_SRC})
 set_target_properties(typhon PROPERTIES VERSION ${PROJECT_VERSION})
-set_target_properties(typhon PROPERTIES PUBLIC_HEADER api/typhon.h)
 
-target_compile_features(typhon PUBLIC cxx_std_11)
+set (TYPHON_PUBLIC_HEADERS "include/typhon.h")
+set_target_properties(typhon PROPERTIES PUBLIC_HEADER "${TYPHON_PUBLIC_HEADERS}")
+
+target_compile_features(typhon PRIVATE cxx_std_11)
 target_compile_options(typhon PRIVATE -Wall -Wextra -pedantic)
 
 target_include_directories(typhon PRIVATE include)
 
-# Add git info
-add_definitions("-DTYPHON_GIT_BRANCH=${GIT_BRANCH}")
-add_definitions("-DTYPHON_GIT_COMMIT_HASH=${GIT_COMMIT_HASH}")
-
 if (CMAKE_BUILD_TYPE MATCHES "Debug")
     add_definitions("-DTYPHON_DEBUG")
 endif (CMAKE_BUILD_TYPE MATCHES "Debug")
+
+
+
+# ------------------------------------------------------------------------------
+# Fortran module
+# ------------------------------------------------------------------------------
+if (ENABLE_FORTRAN)
+    target_sources(typhon PRIVATE ${PROJECT_SOURCE_DIR}/src/typhon.f90)
+
+    list (APPEND TYPHON_PUBLIC_HEADERS "build/typhon.mod")
+    set_target_properties(typhon PROPERTIES PUBLIC_HEADER
+        "${TYPHON_PUBLIC_HEADERS}")
+
+    target_compile_options(typhon PRIVATE
+        $<$<COMPILE_LANGUAGE:Fortran>:-std=f2008>)
+    target_compile_options(typhon PRIVATE
+        $<$<COMPILE_LANGUAGE:Fortran>:-Wno-c-binding-type>)
+endif (ENABLE_FORTRAN)
 
 
 
@@ -117,18 +133,30 @@ endif (BUILD_TYPHON_DUMP)
 # MPI
 # ------------------------------------------------------------------------------
 set(MPI_CXX_SKIP_MPICXX "true")
-find_package(MPI COMPONENTS CXX REQUIRED)
+if (ENABLE_FORTRAN)
+    find_package(MPI COMPONENTS CXX Fortran REQUIRED)
+else (ENABLE_FORTRAN)
+    find_package(MPI COMPONENTS CXX REQUIRED)
+endif (ENABLE_FORTRAN)
 
 target_include_directories(typhon PUBLIC ${MPI_CXX_INCLUDE_DIRS})
 target_link_libraries(typhon PUBLIC ${MPI_CXX_LIBRARIES})
 
-if (MPI_CXX_COMPILE_OPTIONS)
-    target_compile_options(typhon PUBLIC "${MPI_CXX_COMPILE_OPTIONS}")
-endif (MPI_CXX_COMPILE_OPTIONS)
+if (ENABLE_FORTRAN)
+    target_include_directories(typhon PUBLIC ${MPI_Fortran_INCLUDE_DIRS})
+    target_link_libraries(typhon PUBLIC ${MPI_Fortran_LIBRARIES})
+endif (ENABLE_FORTRAN)
 
-if (MPI_CXX_LINK_FLAGS)
-    set_target_properties(typhon PROPERTIES LINK_FLAGS "${MPI_CXX_LINK_FLAGS}")
-endif (MPI_CXX_LINK_FLAGS)
+target_compile_options(typhon PUBLIC
+    $<$<COMPILE_LANGUAGE:CXX>:${MPI_CXX_COMPILE_OPTIONS}>)
+set_target_properties(typhon PROPERTIES LINK_FLAGS ${MPI_CXX_LINK_FLAGS})
+
+if (ENABLE_FORTRAN)
+    target_compile_options(typhon PUBLIC
+        $<$<COMPILE_LANGUAGE:Fortran>:${MPI_Fortran_COMPILE_OPTIONS}>)
+    set_target_properties(typhon PROPERTIES LINK_FLAGS
+        ${MPI_Fortran_LINK_FLAGS})
+endif (ENABLE_FORTRAN)
 
 
 

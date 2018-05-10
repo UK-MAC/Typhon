@@ -16,6 +16,8 @@
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
 #include "typhon.h"
+#include "types.h"
+#include "utilities.h"
 #include "distribute/element_cloud.h"
 
 #include <algorithm>
@@ -124,7 +126,7 @@ Element_Cloud::Set_Data(int nproc, int rank, Layer_Info &layer_info,
 
     // Sum cnt across PEs
     int total;
-    int typh_err = TYPH_Reduce(&cnt, nullptr, 0, &total, TYPH_OP_SUM);
+    int typh_err = TYPH_Reduce_i(&cnt, nullptr, 0, &total, TYPH_OP_SUM);
     if (typh_err != TYPH_SUCCESS) {
         assert(false && "unhandled error");
         return;

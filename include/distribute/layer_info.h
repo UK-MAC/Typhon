@@ -18,7 +18,10 @@
 #ifndef TYPHON_DISTRIBUTE_LAYER_INFO_H
 #define TYPHON_DISTRIBUTE_LAYER_INFO_H
 
+#include <mpi.h>
 #include <string>
+
+#include "typhon.h"
 
 
 

@@ -15,12 +15,19 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <iostream>
 #include <numeric>
 #include <cassert>
 #include <memory>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "register.h"
+#include "decomposition.h"
+#include "keys.h"
+#include "schedule.h"
 
 
 

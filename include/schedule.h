@@ -18,6 +18,8 @@
 #ifndef TYPHON_SCHEDULE_H
 #define TYPHON_SCHEDULE_H
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {

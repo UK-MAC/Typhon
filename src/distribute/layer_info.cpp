@@ -16,6 +16,7 @@
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
 #include "typhon.h"
+#include "utilities.h"
 #include "distribute/layer_info.h"
 
 #include <cassert>
@@ -362,7 +363,7 @@ Get_New_Nodes(
 {
     assert(nd_to_el != nullptr && "nd_to_el not provided");
     assert(nd_to_el_dims != nullptr && "nd_to_el_dims not provided");
-    assert(nd_to_el_dims[0] == 2 || nd_to_el_dims[0] == Node_Cloud::LEN &&
+    assert((nd_to_el_dims[0] == 2 || nd_to_el_dims[0] == Node_Cloud::LEN) &&
             "incorrectly sized nd_to_el");
 
     auto IXn2e = IX2;

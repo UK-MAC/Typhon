@@ -16,6 +16,9 @@
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
 #include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
 
 #include "distribute/displacements.h"
 #include "distribute/element_cloud.h"

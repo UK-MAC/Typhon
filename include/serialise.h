@@ -18,6 +18,8 @@
 #ifndef TYPHON_SERIALISE_H
 #define TYPHON_SERIALISE_H
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {
@@ -53,45 +55,6 @@ int Deserialise(std::istream &is, Quant *quant);
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Public Typhon API - serialisation related functions
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** \brief Serialise the given key set to a file. */
-int
-TYPH_Serialise_Key_Set(
-        std::string filename,
-        int key_set_id);
-
-/** \brief Serialise the given phase to a file. */
-int
-TYPH_Serialise_Phase(
-        std::string filename,
-        int phase_id);
-
-/** \brief Serialise all phases to a file. */
-int
-TYPH_Serialise_All_Phases(
-        std::string filename);
-
-/** \brief Serialise the given quantity to a file. */
-int
-TYPH_Serialise_Quant(
-        std::string filename,
-        int quant_id);
-
-/** \brief Serialise all quantities to a file. */
-int
-TYPH_Serialise_All_Quants(
-        std::string filename);
-
-/** @} */
 
 
 

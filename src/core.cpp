@@ -15,12 +15,15 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <cassert>
 #include <string>
 #include <vector>
 #include <iostream>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
 
 
 
@@ -257,8 +260,7 @@ Core::Init_MPI_Runtime(
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Init(
-        MPI_Comm *comm)
+TYPH_Init(MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -271,16 +273,24 @@ TYPH_Init(
     return Core::Get_Singleton()->Initialise(comm);
 }
 
+int
+TYPH_Init_F(MPI_Fint *comm)
+{
+    MPI_Comm ccomm = MPI_Comm_f2c(*comm);
+    int typh_err = TYPH_Init(&ccomm);
+    *comm = MPI_Comm_c2f(ccomm);
+    return typh_err;
+}
+
 
 
 /**
- * \param [in] finalise whether to call MPI_Finalize
+ * \param [in] finalise     non-zero value instructs to call MPI_Finalize
  *
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Kill(
-        bool finalise)
+TYPH_Kill(int finalise)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -289,7 +299,7 @@ TYPH_Kill(
             TYPH_ERR_UNINITIALISED,
             "Not initialised");
 
-    int typh_err = TYPH_CORE->Kill(finalise);
+    int typh_err = TYPH_CORE->Kill(finalise != 0);
     TYPH_ASSERT_RET(
             typh_err == TYPH_SUCCESS,
             ERR_INT,
@@ -307,8 +317,7 @@ TYPH_Kill(
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Abort(
-        int abort_code)
+TYPH_Abort(int abort_code)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -333,8 +342,7 @@ TYPH_Abort(
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Get_Size(
-        int *size)
+TYPH_Get_Size(int *size)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -361,8 +369,7 @@ TYPH_Get_Size(
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Get_Rank(
-        int *rank)
+TYPH_Get_Rank(int *rank)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -386,8 +393,8 @@ TYPH_Get_Rank(
 /**
  * \returns if the calling processors is the master rank
  */
-bool
-TYPH_Is_Master()
+int
+TYPH_Is_Master(void)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -396,7 +403,7 @@ TYPH_Is_Master()
             TYPH_ERR_UNINITIALISED,
             "Not initialised");
 
-    return TYPH_CORE->Get_MPI_Runtime()->is_master;
+    return TYPH_CORE->Get_MPI_Runtime()->is_master ? 1 : 0;
 }
 
 
@@ -405,7 +412,7 @@ TYPH_Is_Master()
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Barrier()
+TYPH_Barrier(void)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -423,7 +430,7 @@ TYPH_Barrier()
  * \returns time in seconds since some arbitrary point in the past
  */
 double
-TYPH_Get_Time()
+TYPH_Get_Time(void)
 {
     return MPI_Wtime();
 }
@@ -436,8 +443,7 @@ TYPH_Get_Time()
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Set_Comm(
-        MPI_Comm *comm)
+TYPH_Set_Comm(MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -450,6 +456,15 @@ TYPH_Set_Comm(
     return TYPH_SUCCESS;
 }
 
+int
+TYPH_Set_Comm_F(MPI_Fint *comm)
+{
+    MPI_Comm ccomm = MPI_Comm_f2c(*comm);
+    int typh_err = TYPH_Set_Comm(&ccomm);
+    *comm = MPI_Comm_c2f(ccomm);
+    return typh_err;
+}
+
 
 
 /**
@@ -458,8 +473,7 @@ TYPH_Set_Comm(
  * \returns TYPH_SUCCESS or TYPH_FAIL
  */
 int
-TYPH_Set_Comm_Self(
-        MPI_Comm *comm)
+TYPH_Set_Comm_Self(MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -470,4 +484,13 @@ TYPH_Set_Comm_Self(
 
     *comm = MPI_COMM_SELF;
     return TYPH_SUCCESS;
+}
+
+int
+TYPH_Set_Comm_Self_F(MPI_Fint *comm)
+{
+    MPI_Comm ccomm = MPI_Comm_f2c(*comm);
+    int typh_err = TYPH_Set_Comm_Self(&ccomm);
+    *comm = MPI_Comm_c2f(ccomm);
+    return typh_err;
 }

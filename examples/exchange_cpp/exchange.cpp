@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cmath>
+#include <cassert>
 
 #include <typhon.h>
 
@@ -46,20 +47,15 @@ get_nd_num(int meshw, int meshh, int x, int y)
 int
 main(int argc, const char *argv[])
 {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <meshw> <meshh>\n";
-        return EXIT_FAILURE;
-    }
-
     // Mesh dims
-    int const meshw = std::stoi(argv[1]);
-    int const meshh = std::stoi(argv[2]);
+    int const meshw = 100;
+    int const meshh = 100;
 
 
     // -------------------------------------------------------------------------
     // INITIALISATION
     // -------------------------------------------------------------------------
-    int typh_err = TYPH_Init();
+    int typh_err = TYPH_Init(nullptr);
     check_typh_err(typh_err, "TYPH_Init");
 
     int nproc, rank;
@@ -200,7 +196,7 @@ main(int argc, const char *argv[])
     delete[] conn_data;
     delete[] partition;
 
-    // Init Typhon partitioning info
+    // Init Typhon decomposition info
     // ... Calculate cumulative layer sizes
     int *layer_cum_nel = new int[nlay+1];
     int *layer_cum_nnd = new int[nlay+1];
@@ -212,9 +208,9 @@ main(int argc, const char *argv[])
     }
 
     int partition_id;
-    typh_err = TYPH_Set_Partition_Info(partition_id, TYPH_SHAPE_QUAD, nlay,
+    typh_err = TYPH_Set_Partition_Info(&partition_id, TYPH_SHAPE_QUAD, nlay,
             layer_cum_nel, layer_cum_nnd, elowner, ndowner, ellocglob,
-            ndlocglob, elnd);
+            ndlocglob, elnd, "partitioning");
     check_typh_err(typh_err, "TYPH_Set_Partition_Info");
 
     delete[] layer_cum_nnd;
@@ -223,7 +219,7 @@ main(int argc, const char *argv[])
     // Create key set
     int keyset_id;
     typh_err = TYPH_Create_Key_Set(TYPH_KEYTYPE_CELL, 1, nlay, partition_id,
-            keyset_id);
+            &keyset_id);
     check_typh_err(typh_err, "TYPH_Create_Key_Set");
 
     // Add a quant
@@ -243,10 +239,10 @@ main(int argc, const char *argv[])
         elquant[IXr(ndperel, iel, 3)] = -1.;
     }
 
-    // Register quant with typhon
+    // Register quant with Typhon
     int dims[2] = {TYPH_MESH_DIM, ndperel};
     int elquant_id;
-    typh_err = TYPH_Add_Quant(elquant_id, "elquant", TYPH_GHOSTS_ONE,
+    typh_err = TYPH_Add_Quant(&elquant_id, "elquant", TYPH_GHOSTS_ONE,
             TYPH_DATATYPE_REAL, TYPH_CENTRING_CELL, TYPH_PURE,
             TYPH_AUXILIARY_NONE, dims, 2);
     check_typh_err(typh_err, "TYPH_Add_Quant");
@@ -257,11 +253,11 @@ main(int argc, const char *argv[])
 
     // Add a phase
     int phase_id;
-    typh_err = TYPH_Add_Phase(phase_id, "phase", TYPH_GHOSTS_ONE, TYPH_PURE,
-            keyset_id);
+    typh_err = TYPH_Add_Phase(&phase_id, "phase", TYPH_GHOSTS_ONE, TYPH_PURE,
+            keyset_id, -1);
     check_typh_err(typh_err, "TYPH_Add_Phase");
 
-    typh_err = TYPH_Add_Quant_To_Phase(phase_id, elquant_id);
+    typh_err = TYPH_Add_Quant_To_Phase(phase_id, elquant_id, -1, -1, -1, -1);
     check_typh_err(typh_err, "TYPH_Add_Quant_To_Phase");
 
     // Initialisation complete
@@ -274,10 +270,12 @@ main(int argc, const char *argv[])
     // -------------------------------------------------------------------------
     // Before exchange, all ghosts are set to -1
     for (int iel = layer_nel[0]; iel < total_nel; iel++) {
-        assert(elquant[IXr(ndperel, iel, 0)] == -1);
-        assert(elquant[IXr(ndperel, iel, 1)] == -1);
-        assert(elquant[IXr(ndperel, iel, 2)] == -1);
-        assert(elquant[IXr(ndperel, iel, 3)] == -1);
+        for (int j = 0; j < ndperel; j++) {
+            if (elquant[IXr(ndperel, iel, j)] != -1.) {
+                std::cerr << "error\n";
+                std::exit(1);
+            }
+        }
     }
 
     typh_err = TYPH_Exchange(phase_id);
@@ -285,10 +283,13 @@ main(int argc, const char *argv[])
 
     // After exchange, ghosts should contain their owner's rank
     for (int iel = layer_nel[0]; iel < total_nel; iel++) {
-        assert(elquant[IXr(ndperel, iel, 0)] == elowner[IXr(2, iel, 0)]);
-        assert(elquant[IXr(ndperel, iel, 1)] == elowner[IXr(2, iel, 0)]);
-        assert(elquant[IXr(ndperel, iel, 2)] == elowner[IXr(2, iel, 0)]);
-        assert(elquant[IXr(ndperel, iel, 3)] == elowner[IXr(2, iel, 0)]);
+        for (int j = 0; j < ndperel; j++) {
+            if (elquant[IXr(ndperel, iel, j)] !=
+                    (double) elowner[IXr(2, iel, 0)]) {
+                std::cerr << "error\n";
+                std::exit(1);
+            }
+        }
     }
 
     typh_err = TYPH_Barrier();
@@ -308,7 +309,7 @@ main(int argc, const char *argv[])
     delete[] layer_nnd;
     delete[] layer_nel;
 
-    typh_err = TYPH_Kill();
+    typh_err = TYPH_Kill(1);
     check_typh_err(typh_err, "TYPH_Kill");
 
     return EXIT_SUCCESS;

@@ -15,9 +15,13 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <cassert>
+#include <mpi.h>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
 
 
 
@@ -51,7 +55,7 @@ Dt_Reduce_Op(
 
 // Procedure to register the type and operator with MPI
 int
-TYPH_Add_Reduce_Dt()
+TYPH_Add_Reduce_Dt(void)
 {
     using namespace _TYPH_Internal;
 
@@ -126,12 +130,12 @@ TYPH_Add_Reduce_Dt()
 
 
 int
-TYPH_Reduce_Dt(TYPH_Dt &val)
+TYPH_Reduce_Dt(TYPH_Dt *val)
 {
     using namespace _TYPH_Internal;
 
     TYPH_Dt rval;
-    int mpi_err = MPI_Allreduce(&val, &rval, 1, dt_reduce_type, dt_reduce_op,
+    int mpi_err = MPI_Allreduce(val, &rval, 1, dt_reduce_type, dt_reduce_op,
             TYPH_CORE->Get_MPI_Runtime()->comm);
 
     TYPH_ASSERT_RET(
@@ -140,6 +144,6 @@ TYPH_Reduce_Dt(TYPH_Dt &val)
             TYPH_ERR_MPI,
             "MPI_Allreduce failed");
 
-    val = rval;
+    *val = rval;
     return TYPH_SUCCESS;
 }

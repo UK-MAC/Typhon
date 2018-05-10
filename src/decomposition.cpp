@@ -15,10 +15,15 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <vector>
 #include <iostream>
+#include <mpi.h>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "decomposition.h"
 
 
 
@@ -75,7 +80,7 @@ Get_Partition_Info(
  */
 int
 TYPH_Set_Partition_Info(
-        int &partition_id,
+        int *partition_id,
         TYPH_Shape el_shape,
         int num_layers,
         int const *num_el_total,
@@ -85,24 +90,17 @@ TYPH_Set_Partition_Info(
         int const *el_loc_to_glob,
         int const *nd_loc_to_glob,
         int const *connectivity,
-        std::string name)
+        char const *cname)
 {
     using namespace _TYPH_Internal;
 
     auto constexpr IXe2p = &Index_2D<2>;
     auto constexpr IXn2p = &Index_2D<2>;
 
-    // XXX dimensions
-    //integer(kind=INK),dimension(0:), intent(in)           :: N_El_tot
-    //integer(kind=INK),dimension(0:), intent(in)           :: N_Nod_tot
-    //integer(kind=INK),dimension(:,:),intent(in)           :: El_To_Proc
-    //integer(kind=INK),dimension(:,:),intent(in)           :: Nod_To_Proc
-    //
-    //integer(kind=INK),dimension(N_El_tot(N_Layers)), intent(in)           :: El_Loc_To_Glob
-    //integer(kind=INK),dimension(N_Nod_tot(N_Layers)),intent(in)           :: Nod_Loc_To_Glob
-    //
-    //integer(kind=INK),dimension(El_Shape,N_El_tot(N_Layers)),intent(in),
-    //      optional :: Connectivity
+    std::string name;
+    if (cname != nullptr) {
+        name = std::string(cname);
+    }
 
     int irc = TYPH_SUCCESS;
     MPI_Runtime const *mp = TYPH_CORE->Get_MPI_Runtime();
@@ -111,7 +109,7 @@ TYPH_Set_Partition_Info(
     partitions.push_back(partition_info);
 
     partition_info->partition_id = partitions.size() - 1;
-    partition_id = partition_info->partition_id;
+    *partition_id = partition_info->partition_id;
 
     partition_info->name = name;
 

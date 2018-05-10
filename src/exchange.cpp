@@ -15,7 +15,14 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
+#include <mpi.h>
+
 #include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "register.h"
+#include "schedule.h"
 
 
 

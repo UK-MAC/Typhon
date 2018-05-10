@@ -15,16 +15,25 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <algorithm>
 #include <cassert>
+#include <mpi.h>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "register.h"
 
 
 
 int
-TYPH_Add_Quant_To_Phase(int phase_id, int quant_id, int recv_quant_id,
-        int key_set_id, int ghosts_min, int ghosts_max)
+TYPH_Add_Quant_To_Phase(
+        int phase_id,
+        int quant_id,
+        int recv_quant_id,
+        int key_set_id,
+        int ghosts_min,
+        int ghosts_max)
 {
     using namespace _TYPH_Internal;
 
@@ -114,7 +123,11 @@ TYPH_Add_Quant_To_Phase(int phase_id, int quant_id, int recv_quant_id,
 
 
 int
-TYPH_Set_Quant_Address(int quant_id, void *data, int const *dims, int rank)
+TYPH_Set_Quant_Address(
+        int quant_id,
+        void *data,
+        int const *dims,
+        int rank)
 {
     using namespace _TYPH_Internal;
 

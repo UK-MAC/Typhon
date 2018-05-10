@@ -20,6 +20,8 @@
 
 #include <string>
 
+#include "typhon.h"
+
 
 
 namespace _TYPH_Internal {
@@ -60,32 +62,6 @@ Get_Partition_Info(
 /** @} */
 
 } // namespace _TYPH_Internal
-
-// -----------------------------------------------------------------------------
-// Public Typhon API - decomposition related functions
-// -----------------------------------------------------------------------------
-/**
- * \addtogroup typhon
- *
- * @{
- */
-
-/** \brief Specify how the mesh is distributed amongst processors. */
-int
-TYPH_Set_Partition_Info(
-        int &partition_id,
-        TYPH_Shape el_shape,
-        int num_layers,
-        int const *num_el_total,
-        int const *num_nd_total,
-        int const *el_to_proc,
-        int const *nd_to_proc,
-        int const *el_loc_to_glob,
-        int const *nd_loc_to_glob,
-        int const *connectivity = nullptr,
-        std::string name = "");
-
-/** @} */
 
 
 

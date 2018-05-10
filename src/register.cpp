@@ -15,13 +15,17 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <string>
 #include <map>
 #include <cassert>
 #include <algorithm>
 #include <iostream>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "register.h"
 
 
 
@@ -326,7 +330,7 @@ Registry::~Registry()
 } // namespace _TYPH_Internal
 
 int
-TYPH_Start_Register()
+TYPH_Start_Register(void)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -358,7 +362,7 @@ TYPH_Start_Register()
 
 
 int
-TYPH_Finish_Register()
+TYPH_Finish_Register(void)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -378,17 +382,23 @@ TYPH_Finish_Register()
 
 
 int
-TYPH_Is_Registering(bool &ret)
+TYPH_Is_Registering(int *is_registering)
 {
-    ret = (TYPH_REGISTRY != nullptr && TYPH_REGISTRY->Is_Registering());
+    *is_registering =
+        (TYPH_REGISTRY != nullptr && TYPH_REGISTRY->Is_Registering());
     return TYPH_SUCCESS;
 }
 
 
 
 int
-TYPH_Add_Phase(int &phase_id, std::string name, TYPH_Ghosts num_ghosts,
-        int pure_or_aux __attribute__((unused)), int key_set_id, int ghosts_min)
+TYPH_Add_Phase(
+        int *phase_id,
+        char const *cname,
+        TYPH_Ghosts num_ghosts,
+        int pure_or_aux __attribute__((unused)),
+        int key_set_id,
+        int ghosts_min)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -396,6 +406,11 @@ TYPH_Add_Phase(int &phase_id, std::string name, TYPH_Ghosts num_ghosts,
             ERR_USER,
             TYPH_ERR_INVALID_OP,
             "Not in registration mode");
+
+    std::string name;
+    if (cname != nullptr) {
+        name = std::string(cname);
+    }
 
     int num_layers;
     switch (num_ghosts) {
@@ -411,7 +426,7 @@ TYPH_Add_Phase(int &phase_id, std::string name, TYPH_Ghosts num_ghosts,
                 "Unrecognised value for num_ghosts");
     }
 
-    int const typh_err = TYPH_REGISTRY->Add_Phase(phase_id, name, num_layers,
+    int const typh_err = TYPH_REGISTRY->Add_Phase(*phase_id, name, num_layers,
             pure_or_aux, key_set_id, ghosts_min);
     return TYPH_ASSERT(
             typh_err == TYPH_SUCCESS,
@@ -423,10 +438,16 @@ TYPH_Add_Phase(int &phase_id, std::string name, TYPH_Ghosts num_ghosts,
 
 
 int
-TYPH_Add_Quant(int &quant_id, std::string name, TYPH_Ghosts num_ghosts,
-        TYPH_Datatype datatype, TYPH_Centring centring,
-        int pure_or_aux __attribute__((unused)), TYPH_Auxiliary aux,
-        int const *dims, int rank)
+TYPH_Add_Quant(
+        int *quant_id,
+        char const *cname,
+        TYPH_Ghosts num_ghosts,
+        TYPH_Datatype datatype,
+        TYPH_Centring centring,
+        int pure_or_aux __attribute__((unused)),
+        TYPH_Auxiliary aux,
+        int const *dims,
+        int rank)
 {
     using namespace _TYPH_Internal;
     TYPH_ASSERT_RET(
@@ -434,6 +455,11 @@ TYPH_Add_Quant(int &quant_id, std::string name, TYPH_Ghosts num_ghosts,
             ERR_USER,
             TYPH_ERR_INVALID_OP,
             "Not in registration mode");
+
+    std::string name;
+    if (cname != nullptr) {
+        name = std::string(cname);
+    }
 
     int num_layers;
     switch (num_ghosts) {
@@ -449,7 +475,7 @@ TYPH_Add_Quant(int &quant_id, std::string name, TYPH_Ghosts num_ghosts,
                 "Unrecognised value for num_ghosts");
     }
 
-    int const typh_err = TYPH_REGISTRY->Add_Quant(quant_id, name, num_layers,
+    int const typh_err = TYPH_REGISTRY->Add_Quant(*quant_id, name, num_layers,
             datatype, centring, pure_or_aux, aux, dims, rank);
     return TYPH_ASSERT(
             typh_err == TYPH_SUCCESS,

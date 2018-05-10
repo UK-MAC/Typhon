@@ -15,9 +15,14 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
+#include <mpi.h>
 #include <cassert>
+
+#include "typhon.h"
+#include "types.h"
+#include "utilities.h"
+#include "core.h"
+#include "utilities.h"
 
 
 
@@ -86,10 +91,9 @@ Get_MPI_Op(TYPH_Datatype type, TYPH_Op in, MPI_Op *out)
 
 template <typename T>
 int
-Gather_0D(T in, T *out, MPI_Comm *comm)
+Gather_0D(TYPH_Datatype type, T in, T *out, MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
-    TYPH_Datatype const type = TYPH_Datatype_From_T(in);
     MPI_Datatype const mpi_type = MPI_Datatype_From_TYPH_Datatype(type);
     if (mpi_type == MPI_DATATYPE_NULL) return TYPH_FAIL;
 
@@ -101,10 +105,9 @@ Gather_0D(T in, T *out, MPI_Comm *comm)
 
 template <typename T>
 int
-Gather_1D(T *in, int len, T *out, MPI_Comm *comm)
+Gather_1D(TYPH_Datatype type, T *in, int len, T *out, MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
-    TYPH_Datatype const type = TYPH_Datatype_From_T(*in);
     MPI_Datatype const mpi_type = MPI_Datatype_From_TYPH_Datatype(type);
     if (mpi_type == MPI_DATATYPE_NULL) return TYPH_FAIL;
 
@@ -116,11 +119,10 @@ Gather_1D(T *in, int len, T *out, MPI_Comm *comm)
 
 template <typename T>
 int
-Reduce_0D(T in, T *out, TYPH_Op op, MPI_Comm *comm)
+Reduce_0D(TYPH_Datatype type, T in, T *out, TYPH_Op op, MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
 
-    TYPH_Datatype const type = TYPH_Datatype_From_T(in);
     MPI_Datatype const mpi_type = MPI_Datatype_From_TYPH_Datatype(type);
     if (TYPH_ASSERT(
             mpi_type != MPI_DATATYPE_NULL,
@@ -156,10 +158,10 @@ Reduce_0D(T in, T *out, TYPH_Op op, MPI_Comm *comm)
 
 template <typename T>
 int
-Reduce_1D(T *in, int len, T *out, TYPH_Op op, MPI_Comm *comm)
+Reduce_1D(TYPH_Datatype type, T *in, int len, T *out, TYPH_Op op,
+        MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
-    TYPH_Datatype const type = TYPH_Datatype_From_T(*in);
     MPI_Datatype const mpi_type = MPI_Datatype_From_TYPH_Datatype(type);
     if (mpi_type == MPI_DATATYPE_NULL) return TYPH_FAIL;
 
@@ -179,10 +181,10 @@ Reduce_1D(T *in, int len, T *out, TYPH_Op op, MPI_Comm *comm)
 
 template <typename T>
 int
-Reduce_2D(T *in, int const *dims, T *out, TYPH_Op op, MPI_Comm *comm)
+Reduce_2D(TYPH_Datatype type, T *in, int const *dims, T *out, TYPH_Op op,
+        MPI_Comm *comm)
 {
     using namespace _TYPH_Internal;
-    TYPH_Datatype const type = TYPH_Datatype_From_T(*in);
     MPI_Datatype const mpi_type = MPI_Datatype_From_TYPH_Datatype(type);
     if (mpi_type == MPI_DATATYPE_NULL) return TYPH_FAIL;
 
@@ -202,19 +204,18 @@ Reduce_2D(T *in, int const *dims, T *out, TYPH_Op op, MPI_Comm *comm)
 } // namespace
 } // namespace _TYPH_Internal
 
-// XXX(timrlaw): Bit of a horrid way of doing it but saves on code-duplication
-//               since templates can't be used in the public API
-#define GEN_TYPH_GATHER(type) \
+#define GEN_TYPH_GATHER(type, type_name, suffix) \
     int \
-    TYPH_Gather(type *in, int const *dims, int rank, type *out) \
+    TYPH_Gather_##suffix(type *in, int const *dims, int rank, type *out) \
     { \
         using namespace _TYPH_Internal; \
         MPI_Comm *comm = &TYPH_CORE->Get_MPI_Runtime()->comm; \
         switch (rank) { \
         case 0: \
-            return Gather_0D<type>(*in, out, comm); \
+            return Gather_0D<type>(TYPH_DATATYPE_##type_name, *in, out, comm); \
         case 1: \
-            return Gather_1D<type>(in, *dims, out, comm); \
+            return Gather_1D<type>(TYPH_DATATYPE_##type_name, in, *dims, out, \
+                    comm); \
         default: \
             TYPH_ASSERT(false, ERR_USER, TYPH_ERR_INVALID_ARG, \
                      "Unsupported rank (" + std::to_string(rank) + ")"); \
@@ -222,27 +223,53 @@ Reduce_2D(T *in, int const *dims, T *out, TYPH_Op op, MPI_Comm *comm)
         return TYPH_FAIL; \
     }
 
-GEN_TYPH_GATHER(int)
-GEN_TYPH_GATHER(double)
-GEN_TYPH_GATHER(bool)
+GEN_TYPH_GATHER(int, INTEGER, i)
+GEN_TYPH_GATHER(double, REAL, d)
+GEN_TYPH_GATHER(int, LOGICAL, z)
 
 #undef GEN_TYPH_GATHER
 
+int
+TYPH_Gather(
+        TYPH_Datatype datatype,
+        void *in,
+        int const *dims,
+        int rank,
+        void *out)
+{
+    using namespace _TYPH_Internal;
+    switch (datatype) {
+    case TYPH_DATATYPE_INTEGER:
+        return TYPH_Gather_i((int *) in, dims, rank, (int *) out);
+    case TYPH_DATATYPE_REAL:
+        return TYPH_Gather_d((double *) in, dims, rank, (double *) out);
+    case TYPH_DATATYPE_LOGICAL:
+        return TYPH_Gather_z((int *) in, dims, rank, (int *) out);
+    default:
+        TYPH_ASSERT(false, ERR_USER, TYPH_ERR_INVALID_ARG, "Invalid datatype");
+    }
+    return TYPH_FAIL;
+}
 
 
-#define GEN_TYPH_REDUCE(type) \
+
+#define GEN_TYPH_REDUCE(type, type_name, suffix) \
     int \
-    TYPH_Reduce(type *in, int const *dims, int rank, type *out, TYPH_Op op) \
+    TYPH_Reduce_##suffix(type *in, int const *dims, int rank, type *out, \
+            TYPH_Op op) \
     { \
         using namespace _TYPH_Internal; \
         MPI_Comm *comm = &TYPH_CORE->Get_MPI_Runtime()->comm; \
         switch (rank) { \
         case 0: \
-            return Reduce_0D<type>(*in, out, op, comm); \
+            return Reduce_0D<type>(TYPH_DATATYPE_##type_name, *in, out, op, \
+                    comm); \
         case 1: \
-            return Reduce_1D<type>(in, *dims, out, op, comm); \
+            return Reduce_1D<type>(TYPH_DATATYPE_##type_name, in, *dims, out, \
+                    op, comm); \
         case 2: \
-            return Reduce_2D<type>(in, dims, out, op, comm); \
+            return Reduce_2D<type>(TYPH_DATATYPE_##type_name, in, dims, out, \
+                    op, comm); \
         default: \
             TYPH_ASSERT(false, ERR_USER, TYPH_ERR_INVALID_ARG, \
                      "Unsupported rank (" + std::to_string(rank) + ")"); \
@@ -250,8 +277,31 @@ GEN_TYPH_GATHER(bool)
         return TYPH_FAIL; \
     }
 
-GEN_TYPH_REDUCE(int)
-GEN_TYPH_REDUCE(double)
-GEN_TYPH_REDUCE(bool)
+GEN_TYPH_REDUCE(int, INTEGER, i)
+GEN_TYPH_REDUCE(double, REAL, d)
+GEN_TYPH_REDUCE(int, LOGICAL, z)
 
 #undef GEN_TYPH_REDUCE
+
+int
+TYPH_Reduce(
+        TYPH_Datatype datatype,
+        void *in,
+        int const *dims,
+        int rank,
+        void *out,
+        TYPH_Op op)
+{
+    using namespace _TYPH_Internal;
+    switch (datatype) {
+    case TYPH_DATATYPE_INTEGER:
+        return TYPH_Reduce_i((int *) in, dims, rank, (int *) out, op);
+    case TYPH_DATATYPE_REAL:
+        return TYPH_Reduce_d((double *) in, dims, rank, (double *) out, op);
+    case TYPH_DATATYPE_LOGICAL:
+        return TYPH_Reduce_z((int *) in, dims, rank, (int *) out, op);
+    default:
+        TYPH_ASSERT(false, ERR_USER, TYPH_ERR_INVALID_ARG, "Invalid datatype");
+    }
+    return TYPH_FAIL;
+}
