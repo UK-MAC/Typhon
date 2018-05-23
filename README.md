@@ -80,4 +80,5 @@ For examples of using Typhon, please see the `examples` directory.
 
 ## Release history
 
+* 23/05/2018, version 3.0.1
 * 02/05/2018, version 3.0
