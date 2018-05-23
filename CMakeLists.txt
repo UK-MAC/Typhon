@@ -102,7 +102,7 @@ endif (CMAKE_BUILD_TYPE MATCHES "Debug")
 if (ENABLE_FORTRAN)
     target_sources(typhon PRIVATE ${PROJECT_SOURCE_DIR}/src/typhon.f90)
 
-    list (APPEND TYPHON_PUBLIC_HEADERS "build/typhon.mod")
+    list (APPEND TYPHON_PUBLIC_HEADERS ${CMAKE_BINARY_DIR}/typhon.mod)
     set_target_properties(typhon PROPERTIES PUBLIC_HEADER
         "${TYPHON_PUBLIC_HEADERS}")
 
