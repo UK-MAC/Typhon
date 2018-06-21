@@ -2,6 +2,8 @@
 #include "types.h"
 #include "register.h"
 
+#include <cstdlib>
+
 
 
 #define TYPH_FAIL_ON_ERR(terr) \

@@ -1,5 +1,6 @@
 #include <typhon.h>
 
+#include <cstdlib>
 #include <numeric>
 #include <vector>
 #include <memory>

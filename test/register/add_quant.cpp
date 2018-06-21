@@ -1,5 +1,7 @@
 #include <typhon.h>
 
+#include <cstdlib>
+
 #include "types.h"
 #include "register.h"
 
