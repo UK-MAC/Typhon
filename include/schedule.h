@@ -46,6 +46,11 @@ int
 Commit_Phase(
         Phase *phase);
 
+/** \brief Ensure that a schedule is correct. */
+int
+Validate_Committed_Phase(
+        Phase *phase);
+
 /** @} */
 
 } // namespace _TYPH_Internal

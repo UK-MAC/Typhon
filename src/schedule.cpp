@@ -7,11 +7,11 @@
  * terms of the GNU General Public License as published by the Free Software
  * Foundation, either version 3 of the License, or (at your option) any later
  * version.
- * 
+ *
  * Typhon is distributed in the hope that it will be useful, but WITHOUT ANY
  * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR
  * A PARTICULAR PURPOSE. See the GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
@@ -945,5 +945,144 @@ Commit_Phase(Phase *phase)
 
     return TYPH_SUCCESS;
 } // Commit_Phase
+
+
+
+int
+Validate_Committed_Phase(Phase *phase)
+{
+    MPI_Runtime const *mp = TYPH_CORE->Get_MPI_Runtime();
+
+    Schedule *schedule = phase->schedule;
+    if (schedule == nullptr) {
+        return TYPH_FAIL;
+    }
+
+    // Check that each send's size is consistent with the receiver's size
+    std::unique_ptr<int[]> send_sizes(new int[schedule->num_send]);
+    std::unique_ptr<int[]> recv_sizes(new int[schedule->num_recv]);
+
+    std::fill(send_sizes.get(), send_sizes.get() + schedule->num_send, 0);
+    std::fill(recv_sizes.get(), recv_sizes.get() + schedule->num_recv, 0);
+
+    for (int isend = 0; isend < schedule->num_send; isend++) {
+        int mpi_err = MPI_Type_size(
+                schedule->mpi_send_types[isend], &send_sizes[isend]);
+        TYPH_ASSERT_RET(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "Failed to measure MPI type size");
+    }
+
+    for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+        int mpi_err = MPI_Type_size(
+                schedule->mpi_recv_types[irecv], &recv_sizes[irecv]);
+        TYPH_ASSERT_RET(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "Failed to measure MPI type size");
+    }
+
+    std::unique_ptr<int[]> sizes_from_sendr(new int[schedule->num_recv]);
+    std::unique_ptr<int[]> sizes_from_recvr(new int[schedule->num_send]);
+
+    std::unique_ptr<MPI_Request[]> recv_reqs(new MPI_Request[schedule->num_recv]);
+    std::unique_ptr<MPI_Request[]> send_reqs(new MPI_Request[schedule->num_send]);
+
+    std::fill(recv_reqs.get(), recv_reqs.get() + schedule->num_recv,
+            MPI_REQUEST_NULL);
+    std::fill(send_reqs.get(), send_reqs.get() + schedule->num_send,
+            MPI_REQUEST_NULL);
+
+    // ... Receive sent message sizes from sender
+    for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+        int mpi_err = MPI_Irecv(&sizes_from_sendr[irecv], 1, MPI_INTEGER,
+                schedule->recv_procs[irecv], 0, mp->comm, &recv_reqs[irecv]);
+        TYPH_ASSERT(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "MPI_Irecv failed");
+    }
+
+    // ... Receive received message sizes from receiver
+    for (int isend = 0; isend < schedule->num_send; isend++) {
+        int mpi_err = MPI_Irecv(&sizes_from_recvr[isend], 1, MPI_INTEGER,
+                schedule->send_procs[isend], 0, mp->comm, &send_reqs[isend]);
+        TYPH_ASSERT(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "MPI_Irecv failed");
+    }
+
+    // ... Send sent message sizes to receiver
+    for (int isend = 0; isend < schedule->num_send; isend++) {
+        int mpi_err = MPI_Send(&send_sizes[isend], 1, MPI_INTEGER,
+                schedule->send_procs[isend], 0, mp->comm);
+        TYPH_ASSERT(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "MPI_Send failed");
+    }
+
+    // ... Send received message sizes to sender
+    for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+        int mpi_err = MPI_Send(&recv_sizes[irecv], 1, MPI_INTEGER,
+                schedule->recv_procs[irecv], 0, mp->comm);
+        TYPH_ASSERT(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "MPI_Send failed");
+    }
+
+    int mpi_err = MPI_Waitall(schedule->num_send, send_reqs.get(),
+            MPI_STATUS_IGNORE);
+    TYPH_ASSERT(
+            mpi_err == MPI_SUCCESS,
+            ERR_MPI,
+            TYPH_ERR_MPI,
+            "MPI_Waitall failed");
+
+    mpi_err = MPI_Waitall(schedule->num_recv, recv_reqs.get(),
+            MPI_STATUS_IGNORE);
+    TYPH_ASSERT(
+            mpi_err == MPI_SUCCESS,
+            ERR_MPI,
+            TYPH_ERR_MPI,
+            "MPI_Waitall failed");
+
+    // The size of the messages we send should match the size the receiver is
+    // expecting
+    for (int isend = 0; isend < schedule->num_send; isend++) {
+        bool const correct = (send_sizes[isend] == sizes_from_recvr[isend]);
+        TYPH_ASSERT_RET(
+                correct,
+                ERR_INT,
+                TYPH_ERR_INTERNAL,
+                "Message sizes don't match between sender " +
+                    std::to_string(mp->rank) + " and receiver " +
+                    std::to_string(schedule->send_procs[isend]));
+    }
+
+    // The size of the messages we expect to receive should match the size the
+    // sender is going to send
+    for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+        bool const correct = (recv_sizes[irecv] == sizes_from_sendr[irecv]);
+        TYPH_ASSERT_RET(
+                correct,
+                ERR_INT,
+                TYPH_ERR_INTERNAL,
+                "Message sizes don't match between receiver " +
+                    std::to_string(mp->rank) + " and sender " +
+                    std::to_string(schedule->recv_procs[irecv]));
+    }
+
+    return TYPH_SUCCESS;
+}
 
 } // namespace _TYPH_Internal

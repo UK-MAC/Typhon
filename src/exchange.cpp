@@ -97,6 +97,13 @@ Start_Exchange(int phase_id)
                 TYPH_ERR_INTERNAL,
                 "Failed to commit phase");
 
+        typh_err = Validate_Committed_Phase(phase);
+        TYPH_ASSERT(
+                typh_err == TYPH_SUCCESS,
+                ERR_INT,
+                TYPH_ERR_INTERNAL,
+                "Failed to validate committed phase");
+
         phase->is_committed = true;
     }
 
