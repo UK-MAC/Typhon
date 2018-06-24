@@ -958,6 +958,71 @@ Validate_Committed_Phase(Phase *phase)
         return TYPH_FAIL;
     }
 
+    // Check that each process we're planning to send to is expecting a message
+    // from us (implicitly checks the converse)
+    {
+        std::unique_ptr<int[]> comm_grid(new int[mp->size * mp->size]);
+        std::fill(comm_grid.get(), comm_grid.get() + mp->size*mp->size, 0);
+
+        for (int isend = 0; isend < schedule->num_send; isend++) {
+            int const send_proc = schedule->send_procs[isend];
+            comm_grid[mp->rank*mp->size+send_proc] |= 0x1;
+        }
+
+        for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+            int const recv_proc = schedule->recv_procs[irecv];
+            comm_grid[mp->rank*mp->size+recv_proc] |= 0x2;
+        }
+
+        int mpi_err = MPI_Allgather(MPI_IN_PLACE, mp->size, MPI_INT,
+                comm_grid.get(), mp->size, MPI_INT, mp->comm);
+        TYPH_ASSERT_RET(
+                mpi_err == MPI_SUCCESS,
+                ERR_MPI,
+                TYPH_ERR_MPI,
+                "MPI_Allgather failed");
+
+        for (int iproc = 0; iproc < mp->size; iproc++) {
+            if (iproc == mp->rank) continue;
+
+            // If iproc has inidicated that it is going to send us messages
+            if (comm_grid[iproc*mp->size+mp->rank] & 0x1) {
+                // It should be in our recv_procs list
+                bool found = false;
+                for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
+                    if (schedule->recv_procs[irecv] == iproc) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                TYPH_ASSERT_RET(
+                        found,
+                        ERR_INT,
+                        TYPH_ERR_INTERNAL,
+                        "Missing receive from rank " + std::to_string(iproc));
+            }
+
+            // If iproc has inidicated that it is expecting messages from us
+            if (comm_grid[iproc*mp->size+mp->rank] & 0x2) {
+                // It should be in our send_procs list
+                bool found = false;
+                for (int isend = 0; isend < schedule->num_send; isend++) {
+                    if (schedule->send_procs[isend] == iproc) {
+                        found = true;
+                        break;
+                    }
+                }
+
+                TYPH_ASSERT_RET(
+                        found,
+                        ERR_INT,
+                        TYPH_ERR_INTERNAL,
+                        "Missing send to rank " + std::to_string(iproc));
+            }
+        }
+    }
+
     // Check that each send's size is consistent with the receiver's size
     std::unique_ptr<int[]> send_sizes(new int[schedule->num_send]);
     std::unique_ptr<int[]> recv_sizes(new int[schedule->num_recv]);
@@ -998,7 +1063,7 @@ Validate_Committed_Phase(Phase *phase)
 
     // ... Receive sent message sizes from sender
     for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
-        int mpi_err = MPI_Irecv(&sizes_from_sendr[irecv], 1, MPI_INTEGER,
+        int mpi_err = MPI_Irecv(&sizes_from_sendr[irecv], 1, MPI_INT,
                 schedule->recv_procs[irecv], 0, mp->comm, &recv_reqs[irecv]);
         TYPH_ASSERT(
                 mpi_err == MPI_SUCCESS,
@@ -1009,7 +1074,7 @@ Validate_Committed_Phase(Phase *phase)
 
     // ... Receive received message sizes from receiver
     for (int isend = 0; isend < schedule->num_send; isend++) {
-        int mpi_err = MPI_Irecv(&sizes_from_recvr[isend], 1, MPI_INTEGER,
+        int mpi_err = MPI_Irecv(&sizes_from_recvr[isend], 1, MPI_INT,
                 schedule->send_procs[isend], 0, mp->comm, &send_reqs[isend]);
         TYPH_ASSERT(
                 mpi_err == MPI_SUCCESS,
@@ -1020,7 +1085,7 @@ Validate_Committed_Phase(Phase *phase)
 
     // ... Send sent message sizes to receiver
     for (int isend = 0; isend < schedule->num_send; isend++) {
-        int mpi_err = MPI_Send(&send_sizes[isend], 1, MPI_INTEGER,
+        int mpi_err = MPI_Send(&send_sizes[isend], 1, MPI_INT,
                 schedule->send_procs[isend], 0, mp->comm);
         TYPH_ASSERT(
                 mpi_err == MPI_SUCCESS,
@@ -1031,7 +1096,7 @@ Validate_Committed_Phase(Phase *phase)
 
     // ... Send received message sizes to sender
     for (int irecv = 0; irecv < schedule->num_recv; irecv++) {
-        int mpi_err = MPI_Send(&recv_sizes[irecv], 1, MPI_INTEGER,
+        int mpi_err = MPI_Send(&recv_sizes[irecv], 1, MPI_INT,
                 schedule->recv_procs[irecv], 0, mp->comm);
         TYPH_ASSERT(
                 mpi_err == MPI_SUCCESS,
