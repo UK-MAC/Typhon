@@ -26,6 +26,9 @@ static_assert(false, "yaml-cpp support not enabled");
 
 #include <yaml-cpp/yaml.h>
 
+#include "typhon.h"
+#include "types.h"
+
 
 
 YAML::Emitter &

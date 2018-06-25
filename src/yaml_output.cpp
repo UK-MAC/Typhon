@@ -15,8 +15,9 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
 #include "yaml_output.h"
+#include "utilities.h"
+#include "serialise.h"
 
 #include <numeric>
 
@@ -51,8 +52,10 @@ operator<<(YAML::Emitter &emitter, _TYPH_Internal::Key_Set const &key_set)
     emitter << BeginMap;
     emitter << Key << "type" << Value << "keyset";
 
-    emitter << Key << "centring"     << Value << TYPH_To_String(key_set.centring);
-    emitter << Key << "aux"          << Value << TYPH_To_String(key_set.aux);
+    emitter << Key << "centring"     << Value
+            << TYPH_To_String_Centring(key_set.centring);
+    emitter << Key << "aux"          << Value
+            << TYPH_To_String_Auxiliary(key_set.aux);
     emitter << Key << "stride"       << Value << key_set.stride;
     emitter << Key << "layer_min"    << Value << key_set.layer_min;
     emitter << Key << "layer_max"    << Value << key_set.layer_max;
@@ -235,9 +238,12 @@ operator<<(YAML::Emitter &emitter, _TYPH_Internal::Quant const &quant)
 
     emitter << Key << "name"          << Value << quant.name;
     emitter << Key << "quant_data_id" << Value << quant.quant_data_id;
-    emitter << Key << "centring"      << Value << TYPH_To_String(quant.centring);
-    emitter << Key << "datatype"      << Value << TYPH_To_String(quant.datatype);
-    emitter << Key << "aux"           << Value << TYPH_To_String(quant.aux);
+    emitter << Key << "centring"      << Value
+            << TYPH_To_String_Centring(quant.centring);
+    emitter << Key << "datatype"      << Value
+            << TYPH_To_String_Datatype(quant.datatype);
+    emitter << Key << "aux"           << Value
+            << TYPH_To_String_Auxiliary(quant.aux);
     emitter << Key << "is_pure"       << Value << quant.is_pure;
     emitter << Key << "is_aux"        << Value << quant.is_aux;
     emitter << Key << "rank"          << Value << quant.rank;

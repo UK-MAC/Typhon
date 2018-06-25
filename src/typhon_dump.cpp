@@ -15,11 +15,13 @@
  * You should have received a copy of the GNU General Public License along with
  * Typhon. If not, see http://www.gnu.org/licenses/.
  * @HEADER@ */
-#include "typhon.h"
-
 #include <iostream>
 #include <fstream>
 #include <unistd.h> // getopt
+
+#include "typhon.h"
+#include "types.h"
+#include "serialise.h"
 
 #ifdef TYPHON_YAMLCPP_SUPPORT
 #include "yaml_output.h"

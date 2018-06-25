@@ -466,7 +466,7 @@ TYPH_To_String_Auxiliary(TYPH_Auxiliary aux)
 
 
 char const *
-TYPH_To_String_Auxiliary(TYPH_Centring centring)
+TYPH_To_String_Centring(TYPH_Centring centring)
 {
     switch (centring) {
     case TYPH_CENTRING_NODE: return "TYPH_CENTRING_NODE";

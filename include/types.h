@@ -159,7 +159,14 @@ struct Schedule_Part
 
 
 
-/** TODO */
+/** Each #Phase has an associated #Schedule which defines how to communicate it.
+ *  A #Schedule keeps track of which PEs we need to send data to, and which PEs
+ *  we are expecting to receive data from. For each send/receive PE we have an
+ *  MPI derived type for the transaction. The #Schedule also contains information
+ *  which is used to build these derived types, but is not actually used to
+ *  communicate---such as the array of #SchedulePart s. Each #SchedulePart
+ *  represents a send/receive operation with another PE, and contains the base
+ *  address and the #Key (list of offsets). */
 struct Schedule
 {
     static constexpr int SERIALISATION_MARKER = 0x3;
