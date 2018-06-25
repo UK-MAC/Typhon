@@ -700,7 +700,7 @@ Get_Key(
                 TYPH_ERR_INTERNAL,
                 "Fewer keys than advertised");
 
-        if (cur_key->layer == layer) {
+        if (cur_key->proc == proc && cur_key->layer == layer) {
             break;
         }
 
