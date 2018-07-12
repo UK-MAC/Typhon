@@ -55,14 +55,6 @@ enum TYPH_Error : int {
 
 
 
-/** Specify a send or receive operation. */
-enum TYPH_Sendrecv : int {
-    TYPH_SENDRECV_SEND = 1001,
-    TYPH_SENDRECV_RECV = 1002
-};
-
-
-
 /**
  * Each send/recv op for each ghost layer in each quant requires a key, which
  * defines the memory displacements necessary for creating an MPI derived type.

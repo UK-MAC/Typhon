@@ -108,6 +108,12 @@ typedef enum {
     TYPH_OP_AND  = 1013
 } TYPH_Op;
 
+/** Specify a send or receive operation. */
+typedef enum {
+    TYPH_SENDRECV_SEND = 1001,
+    TYPH_SENDRECV_RECV = 1002
+} TYPH_Sendrecv;
+
 
 // -----------------------------------------------------------------------------
 // Public Typhon API - utility functions
@@ -289,6 +295,20 @@ TYPH_Create_Key_Set(
         int layer_max,
         int partition_id,
         int *key_set_id);
+
+/** \brief Get the number of send/receive indices for a given key set. */
+int
+TYPH_Get_Key_Set_Num_Indices(
+        int key_set_id,
+        TYPH_Sendrecv sendrecv,
+        int *num_indices);
+
+/** \brief Get the send/receive indices for a given key set. */
+int
+TYPH_Get_Key_Set_Indices(
+        int key_set_id,
+        TYPH_Sendrecv sendrecv,
+        int *indices);
 
 
 // -----------------------------------------------------------------------------

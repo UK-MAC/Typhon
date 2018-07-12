@@ -885,3 +885,127 @@ TYPH_Create_Key_Set(
 
     return TYPH_SUCCESS;
 }
+
+
+
+int
+TYPH_Get_Key_Set_Num_Indices(
+        int key_set_id,
+        TYPH_Sendrecv sendrecv,
+        int *num_indices)
+{
+    using namespace _TYPH_Internal;
+
+    // Get pointer to key set
+    Key_Set *key_set;
+    int typh_err = Get_Key_Set(key_set_id, &key_set);
+    TYPH_ASSERT_RET(
+            typh_err == TYPH_SUCCESS,
+            ERR_USER,
+            TYPH_ERR_INVALID_ARG,
+            "Key set " + std::to_string(key_set_id) + " not found");
+
+    // Get send/recv keys
+    Key const *keys;
+    int nkey;
+
+    if (sendrecv == TYPH_SENDRECV_SEND) {
+        keys = key_set->send_keys;
+        nkey = key_set->num_send;
+    } else {
+        keys = key_set->recv_keys;
+        nkey = key_set->num_recv;
+    }
+
+    // Initialise count
+    *num_indices = 0;
+
+    // Loop through keys counting number of indices
+    Key const *cur_key = keys;
+    for (int ikey = 0; ikey < nkey; ikey++) {
+
+        *num_indices += cur_key->list_len;
+
+        if (ikey < nkey - 1) {
+            TYPH_ASSERT_RET(
+                    cur_key->next != nullptr,
+                    ERR_INT,
+                    TYPH_ERR_INTERNAL,
+                    "Inconsistent key set size");
+
+            cur_key = cur_key->next;
+        }
+    }
+
+    return TYPH_SUCCESS;
+}
+
+
+
+int
+TYPH_Get_Key_Set_Indices(
+        int key_set_id,
+        TYPH_Sendrecv sendrecv,
+        int *indices)
+{
+    using namespace _TYPH_Internal;
+
+    // User should supply appropriately sized buffer for indices
+    TYPH_ASSERT_RET(
+            indices != nullptr,
+            ERR_USER,
+            TYPH_ERR_INVALID_ARG,
+            "Expecting allocatec indices pointer");
+
+    // Get pointer to key set
+    Key_Set *key_set;
+    int typh_err = Get_Key_Set(key_set_id, &key_set);
+    TYPH_ASSERT_RET(
+            typh_err == TYPH_SUCCESS,
+            ERR_USER,
+            TYPH_ERR_INVALID_ARG,
+            "Key set " + std::to_string(key_set_id) + " not found");
+
+    // Get send/recv keys
+    Key const *keys;
+    int nkey;
+
+    if (sendrecv == TYPH_SENDRECV_SEND) {
+        keys = key_set->send_keys;
+        nkey = key_set->num_send;
+    } else {
+        keys = key_set->recv_keys;
+        nkey = key_set->num_recv;
+    }
+
+    // Loop through keys and copy indices to output array
+    int nind = 0;
+    Key const *cur_key = keys;
+    for (int ikey = 0; ikey < nkey; ikey++) {
+
+        std::copy(
+                cur_key->list,
+                cur_key->list + cur_key->list_len,
+                indices + nind);
+
+        nind += cur_key->list_len;
+
+        if (ikey < nkey - 1) {
+            TYPH_ASSERT(
+                    cur_key->next != nullptr,
+                    ERR_INT,
+                    TYPH_ERR_INTERNAL,
+                    "Inconsistent key set size");
+
+            cur_key = cur_key->next;
+        }
+    }
+
+    TYPH_ASSERT(
+            cur_key->next == nullptr,
+            ERR_INT,
+            TYPH_ERR_INTERNAL,
+            "Inconsistent key set size");
+
+    return TYPH_SUCCESS;
+}
