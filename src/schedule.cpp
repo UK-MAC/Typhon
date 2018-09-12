@@ -310,7 +310,7 @@ Build_Schedule_Parts(Quant_Info const *quant_info, int proc,
                         ERR_INT,
                         TYPH_ERR_INTERNAL,
                         "Incorrect part index " + std::to_string(idx) + " ("
-                            + std::to_string(nparts)) + ")";
+                            + std::to_string(nparts) + ")");
 
                 parts[idx].key          = key;
                 parts[idx].quant_size   = quant_info->quant_size;

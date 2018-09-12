@@ -94,76 +94,101 @@ _Alloc_Check(void *ptr, std::string var)
 }
 
 
-// This sorts a 2D array. absolutely minging FIXME(timrlaw)
+
+/**
+ * This sorts a 2D array using the first element of each row as the key.
+ */
 void
 Sort_0(int *iarray, int const *dims, int rank)
 {
     assert(rank == 2 && "not implemented other ranks");
 
-    #define IX1(i) ((i)-1)
-    #define IX(i, j) (Index_2D((i)-1, (j)-1, dims[0]))
-    int *itemp = new int[dims[0]];
-
+    // n = number of entries to sort
     int const n = dims[1];
     if (n < 2) return;
+
+    // Use the first field as the key
+    int constexpr CMP_FIELD = 1;
+
+    #define IX(i, j) (Index_2D((i)-1, (j)-1, dims[0]))
+    #define IX0(i, j) (Index_2D((i), (j), dims[0]))
+
+    // Temporary storage space for one row
+    int *buf = new int[dims[0]];
+
+    // Copy the row at idx to the buffer
+    auto to_buf =
+        [dims, iarray, buf](int idx)
+    {
+        for (int i = 1; i <= dims[0]; i++) {
+            buf[i-1] = iarray[IX(i, idx)];
+        }
+    };
+
+    // Copy the row in the buffer to idx
+    auto from_buf =
+        [dims, iarray, buf](int idx)
+    {
+        for (int i = 1; i <= dims[0]; i++) {
+            iarray[IX(i, idx)] = buf[i-1];
+        }
+    };
+
+    // Copy the row at src_idx to the row at dst_idx
+    auto copy =
+        [dims, iarray](int src_idx, int dst_idx)
+    {
+        for (int i = 1; i <= dims[0]; i++) {
+            iarray[IX(i, dst_idx)] = iarray[IX(i, src_idx)];
+        }
+    };
 
     int l = n / 2 + 1;
     int ir = n;
     int i, j;
-    int z;
 
-label10:
-    if (l > 1) {
-        l--;
-        for (z = 1; z <= dims[0]; z++) {
-            itemp[IX1(z)] = iarray[IX(z, l)];
-        }
-
-    } else {
-        for (z = 1; z <= dims[0]; z++) {
-            itemp[IX1(z)] = iarray[IX(z, ir)];
-        }
-
-        for (z = 1; z <= dims[0]; z++) {
-            iarray[IX(z, ir)] = iarray[IX(z, 1)];
-        }
-
-        ir--;
-        if (ir == 1) {
-            for (z = 1; z <= dims[0]; z++) {
-                iarray[IX(z, 1)] = itemp[IX1(z)];
-            }
-            return;
-        }
-    }
-
-    i = l;
-    j = 2 * l;
-
-label20:
-    if (j <= ir) {
-        if (j < ir) {
-            if (iarray[IX(1, j)] < iarray[IX(1, j+1)]) j++;
-        }
-
-        if (itemp[IX1(1)] < iarray[IX(1, j)]) {
-            for (z = 1; z <= dims[0]; z++) {
-                iarray[IX(z, i)] = iarray[IX(z, j)];
-            }
-            i = j;
-            j *= 2;
+    while (true) {
+        if (l > 1) {
+            l--;
+            to_buf(l);
 
         } else {
-            j = ir + 1;
+            to_buf(ir);
+            copy(1, ir);
+
+            // Decrement ir. If it now points to the first element, copy the
+            // buffer to that location and we are done.
+            ir--;
+            if (ir == 1) {
+                from_buf(1);
+                break;
+            }
         }
 
-        goto label20;
+        i = l;
+        j = 2 * l;
+
+        while (j <= ir) {
+            if (j < ir) {
+                if (iarray[IX(CMP_FIELD, j)] < iarray[IX(CMP_FIELD, j+1)]) {
+                    j++;
+                }
+            }
+
+            if (buf[CMP_FIELD-1] < iarray[IX(CMP_FIELD, j)]) {
+                copy(j, i);
+                i = j;
+                j *= 2;
+
+            } else {
+                j = ir + 1;
+            }
+        }
+
+        from_buf(i);
     }
 
-    for (z = 1; z <= dims[0]; z++) {
-        iarray[IX(z, i)] = itemp[IX1(z)];
-    }
-    goto label10;
+    delete[] buf;
 
     #undef IX
 }

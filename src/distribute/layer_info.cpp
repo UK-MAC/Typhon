@@ -539,11 +539,13 @@ Get_Base_Layer_Info(
 
     // Set owner PEs based on mesh partitioning, leave local element numbering
     // blank for now
-    Sort_0(layer_info.conn_data, layer_info.conn_dims, 2);
     for (int i = 0; i < nel; i++) {
         layer_info(Element_Cloud::COWNPE, i) = partition[i];
         layer_info(Element_Cloud::COWNLEL, i) = -1;
     }
+
+    // Sort connectivity by global element number
+    Sort_0(layer_info.conn_data, layer_info.conn_dims, 2);
 
     // Send connectivity data to the element cloud
     ec.Set_Data(nproc, rank, layer_info, comm, nel_glob, sdispls, rdispls);
@@ -559,7 +561,8 @@ Get_Base_Layer_Info(
     // node cloud
     int *nd_to_el = nullptr;
     int nd_to_el_dims[2];
-    nc.Set_Data(nproc, rank, comm, layer_info, nnd_glob, nd_to_el, nd_to_el_dims, ns);
+    nc.Set_Data(nproc, rank, comm, layer_info, nnd_glob, nd_to_el,
+            nd_to_el_dims, ns);
 
     // Get list of global nodes and convert connectivity to local node numbering
     Get_New_Nodes(nd_to_el, nd_to_el_dims, layer_info, nullptr);
