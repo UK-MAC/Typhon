@@ -35,13 +35,13 @@ extern "C" {
 // -----------------------------------------------------------------------------
 // Public Typhon API - constants
 // -----------------------------------------------------------------------------
-int constexpr TYPH_MESH_DIM = -88;  //!< Used in the public API to specify quant
-                                    //!  dimensions
+int const TYPH_MESH_DIM = -88;  //!< Used in the public API to specify quant
+                                //!  dimensions
 
-int constexpr TYPH_SUCCESS =  0;    //!< Function returns success
-int constexpr TYPH_FAIL    = -1;    //!< Function returns failure
+int const TYPH_SUCCESS =  0;    //!< Function returns success
+int const TYPH_FAIL    = -1;    //!< Function returns failure
 
-int constexpr TYPH_PURE = 1;        //!< Pure or auxiliary value
+int const TYPH_PURE = 1;        //!< Pure or auxiliary value
 
 
 // -----------------------------------------------------------------------------

@@ -40,6 +40,7 @@ set(TEST_TARGETS
 foreach (TEST_TARGET ${TEST_TARGETS})
     target_include_directories(${TEST_TARGET} PRIVATE ${PROJECT_SOURCE_DIR}/include)
     target_link_libraries(${TEST_TARGET} PRIVATE typhon)
+    target_compile_features(${TEST_TARGET} PRIVATE cxx_std_11)
 
     add_test(
         NAME test_${TEST_TARGET}
