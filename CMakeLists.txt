@@ -7,14 +7,14 @@ endif (NOT DEFINED ENABLE_FORTRAN)
 if (ENABLE_FORTRAN)
     project(
         typhon
-        VERSION 3.0.1
+        VERSION 3.0.2
         DESCRIPTION "Typhon is a distributed communications library for unstructured mesh applications."
         LANGUAGES CXX Fortran
     )
 else (ENABLE_FORTRAN)
     project(
         typhon
-        VERSION 3.0.1
+        VERSION 3.0.2
         DESCRIPTION "Typhon is a distributed communications library for unstructured mesh applications."
         LANGUAGES CXX
     )
